@@ -1,34 +1,18 @@
-## Obsidian TODO Plugin
+## Fork of Obsidian TODO Plugin
 
 Text-based GTD in Obsidian.
 
-[<img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="BuyMeACoffee" width="100">](https://www.buymeacoffee.com/larslockefeer)
+### Changes from forked Repository
+- Split out TODOs by type ("Today", "Without Date", "Upcoming" and "Waiting")
+- Mark a TODO to be on hold / waiting by adding #wait
+- Different workspaces support (Indicated at top of plugin-window)
+  - Personal, Work or CaDo (hardcoded)
+  - Assign Workspace by either tags (#me...) or folders (config is hardcoded, sorry, contact me for help)
+    - default is work
+  - Switch Workspace by pressing the indicator-text (at top of plugin-window)
 
-### Features
-- Aggregates all outstanding TODOs in your vault and lists them in a single view
-- Split out TODOs by type ("Today", "Scheduled", "Inbox" and "Someday/Maybe")
-- Schedule a TODO for a specific date by adding a tag
-- Mark a TODO as Someday/Maybe by adding a tag #someday
-- Complete TODOs from the list view
-- Quickly jump to the file in which a TODO is found from the list view
-- Integrates with the Daily Notes plugin: TODOs without a due date will inherit the date of the daily note as due date
-
-### Settings
-**Date tag format**: Customise the format you use to add due dates to your tasks. Defaults to `#%date%`.
-
-**Date format**: Customise the date format. Uses luxon under the hood. See [their documentation](https://moment.github.io/luxon/#/formatting?id=table-of-tokens) for supported tokens. Defaults to `yyyy-MM-dd`.
-
-**Open files in a new leaf**: When enabled, files opened from within the plugin will open in a new leaf rather than replacing the currently opened file.
-
-### Screenshots
-![](./assets/today.png)
-![](./assets/scheduled.png)
-![](./assets/inbox.png)
-![](./assets/someday.png)
-
-### Roadmap
-- [ ] Scroll to correct line in file when jumping from list view
-- [ ] (Re)schedule TODOs from the list view
-- [ ] Persist cache, on reopening only reindex files changed since Obsidian was closed
-- [ ] Filter items list view by tags / freeform search
-- [ ] Improve UI and themeability
+### use in Obsidian
+- Clone the repo directly into ```yourVault/.obsidian/plugins```
+- Command-Line commands, in repo-root
+  - once: ```npm update```, ```npm audit fix```, ```yarn install```, ```npm i```
+  - after every change: ```npm run dev```

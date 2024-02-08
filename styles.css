@@ -9,6 +9,18 @@ div.todo-item-view-toolbar {
     border-top: 1px solid #cccccc;
 }
 
+div.todo-item-view-switch-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+div.todo-item-view-switch-button-item {
+    font-size: 1.8em;
+    padding-bottom: 12px;
+    cursor: pointer;
+}
+
 div.todo-item-view-toolbar-item {
     padding-left: 15px;
     padding-right: 15px;

@@ -7,5 +7,5 @@ export interface TodoPluginSettings {
 export const DEFAULT_SETTINGS: TodoPluginSettings = {
   dateFormat: 'yyyy-MM-dd',
   dateTagFormat: '#%date%',
-  openFilesInNewLeaf: true,
+  openFilesInNewLeaf: false,
 };

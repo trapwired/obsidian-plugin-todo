@@ -1,8 +1,8 @@
 import { TAbstractFile, TFile, Vault } from 'obsidian';
-import { TodoItem, TodoItemStatus } from '../model/TodoItem';
-import { TodoPluginSettings } from '../model/TodoPluginSettings';
+import { TodoItem, TodoItemStatus } from './TodoItem';
+import { TodoPluginSettings } from './TodoPluginSettings';
 import { DateParser } from '../util/DateParser';
-import { TodoParser } from '../model/TodoParser';
+import { TodoParser } from './TodoParser';
 
 export class TodoIndex {
   private vault: Vault;

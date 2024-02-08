@@ -1,14 +1,20 @@
-import { DateTime } from 'luxon';
-import { ItemView, MarkdownRenderer, WorkspaceLeaf } from 'obsidian';
-import { VIEW_TYPE_TODO } from '../constants';
-import { TodoItem, TodoItemStatus } from '../model/TodoItem';
-import { RenderIcon, Icon } from '../ui/icons';
+import {DateTime} from 'luxon';
+import {ItemView, MarkdownRenderer, WorkspaceLeaf} from 'obsidian';
+import {VIEW_TYPE_TODO} from '../constants';
+import {TodoItem, TodoItemStatus} from '../model/TodoItem';
+import {Icon, RenderIcon} from './icons';
 
 enum TodoItemViewPane {
   Today,
-  Scheduled,
-  Inbox,
-  Someday,
+  Upcoming,
+  WithoutDate,
+  Waiting
+}
+
+export enum ActiveWorkspace {
+  Personal,
+  Work,
+  CaDo,
 }
 export interface TodoItemViewProps {
   todos: TodoItem[];
@@ -19,6 +25,7 @@ export interface TodoItemViewProps {
 
 interface TodoItemViewState {
   activePane: TodoItemViewPane;
+  activeWorkspace: ActiveWorkspace
 }
 
 export class TodoItemView extends ItemView {
@@ -30,6 +37,7 @@ export class TodoItemView extends ItemView {
     this.props = props;
     this.state = {
       activePane: TodoItemViewPane.Today,
+      activeWorkspace: ActiveWorkspace.Work
     };
   }
 
@@ -63,6 +71,9 @@ export class TodoItemView extends ItemView {
     const container = this.containerEl.children[1];
     container.empty();
     container.createDiv('todo-item-view-container', (el) => {
+      el.createDiv('todo-item-view-switch-button', (el) => {
+        this.renderWorkspaceSwitchButton(el);
+      });
       el.createDiv('todo-item-view-toolbar', (el) => {
         this.renderToolBar(el);
       });
@@ -71,6 +82,26 @@ export class TodoItemView extends ItemView {
       });
     });
   }
+
+  private renderWorkspaceSwitchButton(container: HTMLDivElement) {
+    const getNextWorkspace = (current: ActiveWorkspace) => {
+      let values = Object.keys(ActiveWorkspace)
+      return (current + 1) % (values.length / 2)
+    }
+    const switchWorkspace = () => {
+      const newState = {
+        ...this.state,
+        activeWorkspace: getNextWorkspace(this.state.activeWorkspace)
+      };
+      this.setViewState(newState);
+    };
+
+    container.createDiv(`todo-item-view-switch-button-item`, (el) => {
+      el.appendChild(new Text(ActiveWorkspace[this.state.activeWorkspace]));
+      el.onClickEvent(() => switchWorkspace());
+    });
+  }
+
 
   private renderToolBar(container: HTMLDivElement) {
     const activeClass = (pane: TodoItemViewPane) => {
@@ -89,23 +120,24 @@ export class TodoItemView extends ItemView {
       el.appendChild(RenderIcon(Icon.Today, 'Today'));
       el.onClickEvent(() => setActivePane(TodoItemViewPane.Today));
     });
-    container.createDiv(`todo-item-view-toolbar-item${activeClass(TodoItemViewPane.Scheduled)}`, (el) => {
-      el.appendChild(RenderIcon(Icon.Scheduled, 'Scheduled'));
-      el.onClickEvent(() => setActivePane(TodoItemViewPane.Scheduled));
+    container.createDiv(`todo-item-view-toolbar-item${activeClass(TodoItemViewPane.WithoutDate)}`, (el) => {
+      el.appendChild(RenderIcon(Icon.WithoutDate, 'Without Date'));
+      el.onClickEvent(() => setActivePane(TodoItemViewPane.WithoutDate));
     });
-    container.createDiv(`todo-item-view-toolbar-item${activeClass(TodoItemViewPane.Inbox)}`, (el) => {
-      el.appendChild(RenderIcon(Icon.Inbox, 'Inbox'));
-      el.onClickEvent(() => setActivePane(TodoItemViewPane.Inbox));
+    container.createDiv(`todo-item-view-toolbar-item${activeClass(TodoItemViewPane.Upcoming)}`, (el) => {
+      el.appendChild(RenderIcon(Icon.Upcoming, 'Upcoming'));
+      el.onClickEvent(() => setActivePane(TodoItemViewPane.Upcoming));
     });
-    container.createDiv(`todo-item-view-toolbar-item${activeClass(TodoItemViewPane.Someday)}`, (el) => {
-      el.appendChild(RenderIcon(Icon.Someday, 'Someday / Maybe'));
-      el.onClickEvent(() => setActivePane(TodoItemViewPane.Someday));
+    container.createDiv(`todo-item-view-toolbar-item${activeClass(TodoItemViewPane.Waiting)}`, (el) => {
+      el.appendChild(RenderIcon(Icon.Waiting, 'Waiting'));
+      el.onClickEvent(() => setActivePane(TodoItemViewPane.Waiting));
     });
   }
 
   private renderItems(container: HTMLDivElement) {
     this.props.todos
       .filter(this.filterForState, this)
+        .filter(this.filterForWorkspace, this)
       .sort(this.sortByActionDate)
       .forEach((todo) => {
         container.createDiv('todo-item-view-item', (el) => {
@@ -140,6 +172,10 @@ export class TodoItemView extends ItemView {
       });
   }
 
+  private filterForWorkspace(value: TodoItem, _index: number, _array: TodoItem[]): boolean {
+    return value.workspace == this.state.activeWorkspace
+  }
+
   private filterForState(value: TodoItem, _index: number, _array: TodoItem[]): boolean {
     const isToday = (date: DateTime) => {
       const today = DateTime.now();
@@ -152,15 +188,15 @@ export class TodoItemView extends ItemView {
     };
 
     const isTodayNote = value.actionDate && (isToday(value.actionDate) || isBeforeToday(value.actionDate));
-    const isScheduledNote = !value.isSomedayMaybeNote && value.actionDate && !isTodayNote;
+    const isScheduledNote = !value.isWaitingNote && value.actionDate && !isTodayNote;
 
     switch (this.state.activePane) {
-      case TodoItemViewPane.Inbox:
-        return !value.isSomedayMaybeNote && !isTodayNote && !isScheduledNote;
-      case TodoItemViewPane.Scheduled:
+      case TodoItemViewPane.WithoutDate:
+        return !value.isWaitingNote && !isTodayNote && !isScheduledNote;
+      case TodoItemViewPane.Upcoming:
         return isScheduledNote;
-      case TodoItemViewPane.Someday:
-        return value.isSomedayMaybeNote;
+      case TodoItemViewPane.Waiting:
+        return value.isWaitingNote;
       case TodoItemViewPane.Today:
         return isTodayNote;
     }
@@ -168,10 +204,10 @@ export class TodoItemView extends ItemView {
 
   private sortByActionDate(a: TodoItem, b: TodoItem): number {
     if (!a.actionDate && !b.actionDate) {
-      if (a.isSomedayMaybeNote && !b.isSomedayMaybeNote) {
+      if (a.isWaitingNote && !b.isWaitingNote) {
         return -1;
       }
-      if (!a.isSomedayMaybeNote && b.isSomedayMaybeNote) {
+      if (!a.isWaitingNote && b.isWaitingNote) {
         return 1;
       }
       return 0;

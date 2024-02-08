@@ -18,7 +18,7 @@ test('parsing an outstanding todo', async () => {
   expect(todo.status).toEqual(TodoItemStatus.Todo);
   expect(todo.description).toEqual('This is something that needs doing');
   expect(todo.actionDate).toBeUndefined();
-  expect(todo.isSomedayMaybeNote).toEqual(false);
+  expect(todo.isWaitingNote).toEqual(false);
 });
 
 test('parsing a completed todo', async () => {
@@ -31,7 +31,7 @@ test('parsing a completed todo', async () => {
   expect(todo.status).toEqual(TodoItemStatus.Done);
   expect(todo.description).toEqual('This is something that has been completed');
   expect(todo.actionDate).toBeUndefined();
-  expect(todo.isSomedayMaybeNote).toEqual(false);
+  expect(todo.isWaitingNote).toEqual(false);
 });
 
 test('parsing an outstanding todo with a specific action date', async () => {
@@ -46,7 +46,7 @@ test('parsing an outstanding todo with a specific action date', async () => {
   expect(todo.actionDate.day).toEqual(16);
   expect(todo.actionDate.month).toEqual(2);
   expect(todo.actionDate.year).toEqual(2021);
-  expect(todo.isSomedayMaybeNote).toEqual(false);
+  expect(todo.isWaitingNote).toEqual(false);
 });
 
 test('parsing an outstanding someday/maybe todo', async () => {
@@ -59,7 +59,7 @@ test('parsing an outstanding someday/maybe todo', async () => {
   expect(todo.status).toEqual(TodoItemStatus.Todo);
   expect(todo.description).toEqual('This is something that needs doing #someday');
   expect(todo.actionDate).toBeUndefined();
-  expect(todo.isSomedayMaybeNote).toEqual(true);
+  expect(todo.isWaitingNote).toEqual(true);
 });
 
 test('parsing a todo in a daily notes file', async () => {
@@ -85,7 +85,7 @@ test('parsing a todo in a daily notes file tagged as someday/maybe', async () =>
   const todos = await todoParser.parseTasks('/Daily Notes/today.md', contents);
   const todo = todos[0];
   expect(todo.actionDate).toBeUndefined();
-  expect(todo.isSomedayMaybeNote).toEqual(true);
+  expect(todo.isWaitingNote).toEqual(true);
 });
 
 test('parsing an outstanding todo with a specific action date and a someday/maybe tag', async () => {
@@ -94,5 +94,5 @@ test('parsing an outstanding todo with a specific action date and a someday/mayb
   const todo = todos[0];
   expect(todo.status).toEqual(TodoItemStatus.Todo);
   expect(todo.actionDate).toBeUndefined();
-  expect(todo.isSomedayMaybeNote).toEqual(true);
+  expect(todo.isWaitingNote).toEqual(true);
 });

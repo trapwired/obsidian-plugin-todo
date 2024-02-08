@@ -1,7 +1,8 @@
-import { DateParser } from '../util/DateParser';
-import { TodoItem, TodoItemStatus } from '../model/TodoItem';
-import { DateTime } from 'luxon';
-import { extractDueDateFromDailyNotesFile } from '../util/DailyNoteParser';
+import {DateParser} from '../util/DateParser';
+import {TodoItem, TodoItemStatus} from './TodoItem';
+import luxon, {DateTime} from 'luxon';
+import {extractDueDateFromDailyNotesFile} from '../util/DailyNoteParser';
+import {ActiveWorkspace} from "../ui/TodoItemView";
 
 export class TodoParser {
   private dateParser: DateParser;
@@ -11,8 +12,36 @@ export class TodoParser {
   }
 
   async parseTasks(filePath: string, fileContents: string): Promise<TodoItem[]> {
-    const pattern = /(-|\*) \[(\s|x)?\]\s(.*)/g;
+    const pattern = /([-*]) \[(\s|x)?]\s(.*)/g;
     return [...fileContents.matchAll(pattern)].map((task) => this.parseTask(filePath, task));
+  }
+
+  private getWorkspace(filePath: string, description: string): ActiveWorkspace{
+    if (description.match(/#(dg)/g) != null){
+      return ActiveWorkspace.Work
+    }
+    if (description.match(/#(cado)/g) != null){
+      return ActiveWorkspace.CaDo
+    }
+    if (description.match(/#(me)/g) != null){
+      return ActiveWorkspace.Personal
+    }
+
+    function containsAny(source: string, targets: string[]): boolean {
+      return targets.some(target => source.includes(target));
+    }
+
+    const cadoFolders = ['CaDo']
+    if (containsAny(filePath, cadoFolders)){
+      return ActiveWorkspace.CaDo
+    }
+
+    const personalFolders = ['Anything Goes', 'Mine', 'Projekte', 'Software Design']
+    if (containsAny(filePath, personalFolders)){
+      return ActiveWorkspace.Personal
+    }
+
+    return ActiveWorkspace.Work
   }
 
   private parseTask(filePath: string, entry: RegExpMatchArray): TodoItem {
@@ -20,19 +49,34 @@ export class TodoParser {
     const status = entry[2] === 'x' ? TodoItemStatus.Done : TodoItemStatus.Todo;
     const description = entry[3];
 
-    const actionDate = this.parseDueDate(description, filePath);
+    let actionDate = this.parseDueDate(description, filePath);
     const descriptionWithoutDate = this.dateParser.removeDate(description);
-    const somedayPattern = /#(someday)/g;
-    const isSomedayMaybeTask = description.match(somedayPattern) != null;
+    const waitingPattern = /#(wait)/g;
+    const isWaitingTask = description.match(waitingPattern) != null;
+
+    const todayPattern = /#(today)/g;
+    const isToday = description.match(todayPattern) != null;
+    if (isToday){
+      actionDate = luxon.DateTime.now()
+    }
+
+    const tomorrowPattern = /#(tom)/g;
+    const isTomorrow = description.match(tomorrowPattern) != null;
+    if (isTomorrow){
+      actionDate = luxon.DateTime.now().plus({ days: 1 })
+    }
+
+    const workspace = this.getWorkspace(filePath, description)
 
     return new TodoItem(
       status,
       descriptionWithoutDate,
-      isSomedayMaybeTask,
+      isWaitingTask,
       filePath,
       (entry.index ?? 0) + todoItemOffset,
       entry[0].length - todoItemOffset,
-      !isSomedayMaybeTask ? actionDate : undefined,
+      workspace,
+      !isWaitingTask ? actionDate : undefined,
     );
   }
 

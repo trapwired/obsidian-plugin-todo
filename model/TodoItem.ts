@@ -1,4 +1,5 @@
 import { DateTime } from 'luxon';
+import {ActiveWorkspace} from "../ui/TodoItemView";
 
 export enum TodoItemStatus {
   Todo,
@@ -25,7 +26,9 @@ export class TodoItem {
   public status: TodoItemStatus;
   public description: string;
   public actionDate?: DateTime;
-  public isSomedayMaybeNote: boolean;
+  public isWaitingNote: boolean;
+
+  public workspace: ActiveWorkspace
 
   constructor(
     status: TodoItemStatus,
@@ -34,14 +37,16 @@ export class TodoItem {
     sourceFilePath: string,
     startIndex: number,
     length: number,
+    workspace: ActiveWorkspace,
     actionDate?: DateTime,
   ) {
     this.status = status;
     this.description = description;
     this.actionDate = actionDate;
-    this.isSomedayMaybeNote = isSomedayMaybeNote;
+    this.isWaitingNote = isSomedayMaybeNote;
     this.sourceFilePath = sourceFilePath;
     this.startIndex = startIndex;
     this.length = length;
+    this.workspace = workspace;
   }
 }
