@@ -60,12 +60,6 @@ export class TodoParser {
       actionDate = luxon.DateTime.now()
     }
 
-    const tomorrowPattern = /#(tom)/g;
-    const isTomorrow = description.match(tomorrowPattern) != null;
-    if (isTomorrow){
-      actionDate = luxon.DateTime.now().plus({ days: 1 })
-    }
-
     const workspace = this.getWorkspace(filePath, description)
 
     return new TodoItem(

@@ -3,6 +3,7 @@ import { TodoItem, TodoItemStatus } from './TodoItem';
 import { TodoPluginSettings } from './TodoPluginSettings';
 import { DateParser } from '../util/DateParser';
 import { TodoParser } from './TodoParser';
+import luxon from "luxon";
 
 export class TodoIndex {
   private vault: Vault;
@@ -53,6 +54,20 @@ export class TodoIndex {
     });
   }
 
+  async replaceTomorrowTags(file: TFile): Promise<void> {
+    const fileContents = this.vault.read(file);
+    fileContents.then((c: string) => {
+      const tomorrowPattern = /#(tom)/g;
+      const isTomorrow = c.match(tomorrowPattern) != null;
+      if (isTomorrow){
+        const tomorrowDate = luxon.DateTime.now().plus({days: 1}).toFormat('yyyy-MM-dd')
+        const newContents = c.replace('#tom', '#' + tomorrowDate)
+        return this.vault.modify(file, newContents);
+      }
+    });
+    return await new Promise(resolve => resolve());
+  }
+
   setSettings(settings: TodoPluginSettings): void {
     const oldSettings = this.settings;
     this.settings = settings;
@@ -68,7 +83,7 @@ export class TodoIndex {
     if (!(file instanceof TFile)) {
       return;
     }
-    this.indexFile(file as TFile);
+    this.replaceTomorrowTags(file as TFile).then(() => this.indexFile(file as TFile));
   }
 
   private indexFile(file: TFile) {
